@@ -19,7 +19,9 @@
   <h2>How the prediction is made</h2>
   <p>Each channel has its mean removed and 50 Hz mains noise filtered out, and is split into 5-second windows.
     For each window EPC-AI computes four features: the nonlinear energy of each channel, and the energy of each
-    channel's ripple band (62.5–125 Hz, from a wavelet decomposition). The classifier labels every window as
+    channel's fast ripple band (125–250 Hz, from a wavelet decomposition). Channel 1 (EEG1) should be the
+    electrode on the side of the injection (ipsilateral) and channel 2 (EEG2) the opposite side
+    (contralateral). The classifier labels every window as
     normal or outlier; the mouse is classified as outlier when 50% or more of its windows are.</p>
 
   <img class="figure" src="{{ url_for('static', filename='EEG_feature.png') }}" alt="Box plots of the four features for normal and outlier mice">

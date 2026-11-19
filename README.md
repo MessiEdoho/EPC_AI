@@ -30,11 +30,18 @@ For each of the two channels, in volts:
 2. 50 Hz notch filter, Q = 35, applied once forward (MATLAB `filter`);
 3. split into 5 s windows of 2500 samples, keeping a shorter final window (`eeg_win2.m`);
 4. nonlinear energy of each window;
-5. db4 wavelet decomposition to level 7 of the filtered channel; the level 2 detail (62.5–125 Hz,
-   "ripple") is reconstructed as MATLAB `wrcoef` does, and its energy taken per window.
+5. db4 wavelet decomposition to level 7 of the filtered channel; the level 1 detail ("fast ripple",
+   125–250 Hz) is reconstructed as MATLAB `wrcoef` does, and its energy taken per window.
 
-The model classifies each window from the four features `Nl_ene_c1, Energy_rip_c1, Nl_ene_c2,
-Energy_rip_c2`; the mouse is "Outlier" when 50% or more of its windows are.
+The model classifies each window from four features, in this order (the published model, Fig. 6):
+`Nl_ene_c1, Nl_ene_c2, Energy_fr_c1, Energy_fr_c2` (spreadsheet columns `nonlin_energy_C1/C2`,
+`energy_FR_C1/C2`). The mouse is "Outlier" when 50% or more of its windows are. On the spreadsheet
+test-set features this reproduces the published 11 of 16 mice (69%).
+
+Channel 1 (EEG1) is the ipsilateral electrode (injection side), channel 2 (EEG2) the contralateral.
+
+Note: the paper labels the fast ripple band 250–500 Hz; at 500 Hz sampling the highest possible
+frequency is 250 Hz, and the band actually computed is 125–250 Hz.
 
 ## Input rules
 

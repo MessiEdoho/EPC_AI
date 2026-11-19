@@ -90,7 +90,8 @@ def feature_figure(data_dir):
     for _, label, eeg1, eeg2 in readable_recordings(data_dir, "TRAINING"):
         tables[label].append(features.extract_features(eeg1, eeg2))
         mice[label] += 1
-    titles = ["Nonlinear energy, EEG1", "Ripple energy, EEG1", "Nonlinear energy, EEG2", "Ripple energy, EEG2"]
+    titles = ["Nonlinear energy, EEG1", "Nonlinear energy, EEG2", "Fast ripple energy, EEG1",
+              "Fast ripple energy, EEG2"]
     fig = Figure(figsize=(11, 5), dpi=120)
     axes = fig.subplots(1, 4)
     for ax, name, title in zip(axes, features.FEATURE_NAMES, titles):

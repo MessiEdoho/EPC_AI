@@ -9,9 +9,14 @@ Per channel, in volts:
   2. 50 Hz notch, Q = 35, applied once forward (MATLAB `filter`, not zero-phase)
   3. split into 5 s windows of 2500 samples; a shorter final window is kept (eeg_win2.m)
   4. nonlinear energy of each window of the filtered signal
-  5. db4 wavelet decomposition to level 7 of the whole filtered signal; the level 2 detail
-     (62.5-125 Hz, "ripple") is reconstructed as MATLAB wrcoef('d', c, l, 'db4', 2) does,
-     windowed as in 3, and the energy of each window taken
+  5. db4 wavelet decomposition to level 7 of the whole filtered signal; the level 1 detail
+     ("fast ripple", 125-250 Hz at 500 Hz sampling) is reconstructed as MATLAB
+     wrcoef('d', c, l, 'db4', 1) does, windowed as in 3, and the energy of each window taken
+
+The four features and their order follow the published model (Edoho et al., Fig. 6):
+nonlinear energy of channels 1 and 2, then fast ripple energy of channels 1 and 2.
+The spreadsheet columns are nonlin_energy_C1/C2 and energy_FR_C1/C2. The paper labels the
+fast ripple band 250-500 Hz; at 500 Hz sampling the computed band is 125-250 Hz.
 """
 import numpy as np
 import pandas as pd
@@ -24,10 +29,10 @@ NOTCH_HZ = 50.0
 NOTCH_Q = 35.0
 WAVELET = "db4"
 WAVELET_LEVEL = 7
-RIPPLE_LEVEL = 2
+FAST_RIPPLE_LEVEL = 1       # wavelet detail level 1: 125-250 Hz
 
-# Column order is the order the model was trained with.
-FEATURE_NAMES = ["Nl_ene_c1", "Energy_rip_c1", "Nl_ene_c2", "Energy_rip_c2"]
+# Column order is the order the model was trained with. Do not change it.
+FEATURE_NAMES = ["Nl_ene_c1", "Nl_ene_c2", "Energy_fr_c1", "Energy_fr_c2"]
 
 _NOTCH_B, _NOTCH_A = signal.iirnotch(NOTCH_HZ, NOTCH_Q, FS)
 
@@ -43,11 +48,11 @@ def windows(x, win=WIN):
     return [x[i:i + win] for i in range(0, len(x) - 1, win)]
 
 
-def ripple_band(x):
-    """Level 2 wavelet detail reconstructed at full length (MATLAB wrcoef 'd', level 2)."""
+def detail_band(x, level):
+    """Wavelet detail at `level` reconstructed at full length (MATLAB wrcoef 'd')."""
     coeffs = pywt.wavedec(x, WAVELET, level=WAVELET_LEVEL)
     keep = [np.zeros_like(c) for c in coeffs]
-    keep[-RIPPLE_LEVEL] = coeffs[-RIPPLE_LEVEL]
+    keep[-level] = coeffs[-level]
     return pywt.waverec(keep, WAVELET)[:len(x)]
 
 
@@ -61,17 +66,15 @@ def nonlinear_energy(w):
 
 
 def channel_features(x):
-    """Nonlinear energy and ripple energy for each window of one channel (in volts)."""
+    """Nonlinear energy and fast ripple energy for each window of one channel (in volts)."""
     clean = preprocess(x)
     nl = [nonlinear_energy(w) for w in windows(clean)]
-    rip = [energy(w) for w in windows(ripple_band(clean))]
-    return nl, rip
+    fr = [energy(w) for w in windows(detail_band(clean, FAST_RIPPLE_LEVEL))]
+    return nl, fr
 
 
 def extract_features(eeg1, eeg2):
     """Feature table (one row per window) for a two-channel recording in volts."""
-    nl1, rip1 = channel_features(eeg1)
-    nl2, rip2 = channel_features(eeg2)
-    return pd.DataFrame(
-        np.column_stack([nl1, rip1, nl2, rip2]), columns=FEATURE_NAMES
-    )
+    nl1, fr1 = channel_features(eeg1)
+    nl2, fr2 = channel_features(eeg2)
+    return pd.DataFrame(np.column_stack([nl1, nl2, fr1, fr2]), columns=FEATURE_NAMES)
