@@ -20,7 +20,7 @@ EPC-AI is a research aid. It does not diagnose and is not a clinical device.
 | `templates/`, `static/` | Pages, stylesheet and images |
 | `tools/make_images.py` | Regenerates the images in `static/` |
 | `tests/` | Tests; `test_features.py` includes the parity check against the training features |
-| `EPC_backend.py` | Starts the server |
+| `epc_app.py` | Starts the server |
 
 ## How a prediction is made
 
@@ -39,6 +39,18 @@ The model classifies each window from four features, in this order (the publishe
 test-set features this reproduces the published 11 of 16 mice (69%).
 
 Channel 1 (EEG1) is the ipsilateral electrode (injection side), channel 2 (EEG2) the contralateral.
+
+## Result page
+
+- Verdict with the share of outlier windows; 40–60% is marked borderline.
+- Timeline of window classes and outlier probabilities over the recording.
+- Recording details, analysis time, model checksum prefix and app version.
+- EEG amplitude and spectrogram thumbnails (served from the analysis folder).
+- Data-quality warnings (`epc/quality.py`), which never block an analysis:
+  Q01 amplitude far outside EEG in volts (wrong unit), Q02 shorter than 10 minutes,
+  Q03 more than 1% flat windows, Q04 channels nearly identical. None of them fire on the 26 readable
+  training and test recordings.
+- Caveat with the published test accuracy, and the zip download.
 
 Note: the paper labels the fast ripple band 250–500 Hz; at 500 Hz sampling the highest possible
 frequency is 250 Hz, and the band actually computed is 125–250 Hz.
@@ -75,7 +87,7 @@ predictions), kept for future XGBoost versions.
 
 ```
 conda activate epc-ai
-python EPC_backend.py
+python epc_app.py
 ```
 
 Then open http://localhost:8000/EP-Classification/. If port 8000 is taken (IctalX also uses it),
@@ -92,7 +104,7 @@ Settings (environment variables):
 | `EPC_MAX_UPLOAD_MB` | `100` | Largest accepted upload |
 | `EPC_KEEP_HOURS` | `3` | Results and unfinished uploads older than this are deleted |
 | `EPC_URL_PREFIX` | `/EP-Classification` | Path every page and file is served under; empty if a proxy strips it |
-| `EPC_PORT` | `8000` | Port for `python EPC_backend.py` (not used by gunicorn) |
+| `EPC_PORT` | `8000` | Port for `python epc_app.py` (not used by gunicorn) |
 
 ## Deploy on lisda
 
@@ -109,7 +121,7 @@ nginx, like IctalX. Port 8001 and the paths below are examples; agree them with 
    export EPC_MODEL_PATH=/opt/epc-ai-model/Mice.model
    export EPC_UPLOAD_DIR=/var/tmp/epc_uploads
    export EPC_RESULTS_DIR=/var/tmp/epc_results
-   conda run -n epc-ai gunicorn -w 2 --threads 4 --timeout 120 -b 127.0.0.1:8001 EPC_backend:app
+   conda run -n epc-ai gunicorn -w 2 --threads 4 --timeout 120 -b 127.0.0.1:8001 epc_app:app
    ```
 
    Each worker loads the model once. Uploads and results are files on disk, so any worker can

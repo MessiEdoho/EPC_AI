@@ -48,11 +48,13 @@ def classify(model, features):
     """Classify each window, then the mouse by majority of windows.
 
     `features` is the table from features.extract_features. Returns the phenotype label,
-    the share of windows classed as outlier and the per-window classes.
+    the share of windows classed as outlier, the per-window classes and the per-window
+    outlier probabilities.
     """
     X = np.asarray(features, dtype=np.float64)
     with _predict_lock:
         window_class = model.predict(X).astype(int)
+        window_prob = model.predict_proba(X)[:, 1]
     share = float(window_class.mean())
     label = "Outlier" if share >= THRESHOLD else "Normal"
-    return label, share, window_class
+    return label, share, window_class, window_prob

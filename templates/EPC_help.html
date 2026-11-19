@@ -35,9 +35,13 @@
   <p>Following the upload, the system will assess the information and furnish an evaluation indicating whether the
     EEG is more likely to exhibit normal or outlier epilepsy phenotype. The features used for prediction are
     available for download, enabling further analysis by researchers (by clicking 'Download the result'). The
-    download contains the mean and standard deviation of each feature, the features and class of every 5-second
-    window, and the amplitude and spectrogram of each uploaded channel for the user's in-depth analysis. Results
-    are kept on the server for a limited time only.</p>
+    download contains the mean and standard deviation of each feature, the features, outlier probability and class
+    of every 5-second window, and the amplitude and spectrogram of each uploaded channel for the user's in-depth
+    analysis. Results are kept on the server for a limited time only.</p>
+  <p>The result page also shows how many windows were classified as outlier (results between 40% and 60% are
+    marked as borderline), a timeline of the window classes over the recording, and warnings when the input looks
+    wrong: a signal unit that does not fit EEG in volts, a recording much shorter than those the model was developed
+    on, flat stretches that may mean a disconnected electrode, or two channels that are nearly identical.</p>
   <p>A recording of about 30 minutes is processed in a few seconds. If users wish to apply EPC-AI with
     data from another mouse model, they can either conduct a preliminary test themselves or contact us at
     Catherine.Mooney@ucd.ie for assistance. Moreover, we will provide executables for academic use upon request

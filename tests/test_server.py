@@ -17,7 +17,7 @@ def post_file(client, path, name=None, **form):
 
 
 def phenotype(response):
-    m = re.search(rb"phenotype of this mouse is: <b>(\w+)</b>", response.data)
+    m = re.search(rb'<p class="verdict-label">(\w+)</p>', response.data)
     return m.group(1).decode() if m else None
 
 
@@ -64,7 +64,8 @@ def test_four_channel_edf_asks_for_channels(client, settings, tmp_path):
     r = client.post("/EP-Classification/EPC_result/channels", data={"token": token, "channel1": "3", "channel2": "1",
                                                   "filename": "rec.edf"})
     assert r.status_code == 200 and phenotype(r)
-    assert b"C (EEG1), A (EEG2)" in r.data
+    assert re.search(rb"EEG1 \(ipsilateral\)</th><td>C</td>", r.data)
+    assert re.search(rb"EEG2 \(contralateral\)</th><td>A</td>", r.data)
     assert not any(settings.upload_dir.iterdir())
 
 
@@ -144,6 +145,8 @@ def test_model_never_written(client, tmp_path):
 def test_everything_is_under_the_prefix(client):
     page = client.get("/EP-Classification/EDF").data
     for link in re.findall(rb'(?:href|src|action)="([^"#]+)"', page):
+        if link.startswith((b"https://fonts.", b"data:")):              # web fonts and the inline icon
+            continue
         assert link.startswith(b"/EP-Classification/"), link
     assert client.get("/static/epc.css").status_code == 404
     assert client.get("/EPC_result").status_code == 404
@@ -157,3 +160,27 @@ def test_prefix_stripped_by_proxy(settings, model):
     r = client.get("/EDF", headers={"X-Forwarded-Prefix": "/EP-Classification"})
     assert r.status_code == 200
     assert b'action="/EP-Classification/EPC_result"' in r.data
+
+
+def test_result_page_content(client, tmp_path):
+    p = write_edf(tmp_path / "rec.edf", {"EEG 1": eeg(60), "EEG 2": eeg(60, seed=1)})
+    r = post_file(client, p, format="edf")
+    html = r.data
+    assert b'class="vote-fill"' in html and b"five-second windows" in html
+    assert html.count(b'<rect class="tl-') == 12                       # one block per 5 s window
+    assert b"Short recording" in html                                  # 1 minute: Q02 warning
+    assert b"Research aid" in html and mdl.MODEL_SHA256[:8].encode() in html
+    rid = result_id(r)
+    for name in ("EEG1.jpg", "EEG2.jpg"):
+        img = client.get(f"/EP-Classification/psrfigure/{rid}/{name}")
+        assert img.status_code == 200 and img.mimetype == "image/jpeg"
+    assert client.get(f"/EP-Classification/psrfigure/{rid}/Feature_analysis.zip").status_code == 404
+    assert client.get(f"/EP-Classification/psrfigure/{rid}/..%2F..%2Fsecret").status_code == 404
+
+
+def test_unit_warning_shown(client, tmp_path):
+    a, b = eeg(60) * 1e6, eeg(60, seed=1) * 1e6                        # µV values, declared as V
+    p = tmp_path / "rec.csv"
+    p.write_text("".join(f"{x},{y}\n" for x, y in zip(a, b)))
+    r = post_file(client, p, format="csv", sampling_frequency="500", unit="V")
+    assert r.status_code == 200 and b"Signal unit may be wrong" in r.data

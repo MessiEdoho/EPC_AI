@@ -21,7 +21,8 @@ sys.path.insert(0, str(ROOT))
 from epc import features, validation  # noqa: E402
 
 STATIC = ROOT / "static"
-ORANGE, GREY, BLUE = "#ff7d33", "#5b5b5b", "#3a6ea5"
+OUTLIER, GREY, NORMAL = "#A23B5A", "#5F6B76", "#2A7F7E"   # site palette: outlier, muted, normal
+ACCENT = "#0F5F63"                                        # petrol teal accent
 
 
 def synthetic_eeg(n, seed):
@@ -39,7 +40,7 @@ def banner():
     fig = Figure(figsize=(6, 2), dpi=150)
     ax = fig.add_axes([0, 0, 1, 1])
     for k, seed in enumerate((1, 2)):
-        ax.plot(synthetic_eeg(2000, seed) + 4 * k, color=(ORANGE, BLUE)[k], linewidth=1)
+        ax.plot(synthetic_eeg(2000, seed) + 4 * k, color=(ACCENT, GREY)[k], linewidth=1.1)
     ax.axis("off")
     fig.savefig(STATIC / "EEG_amp.png", transparent=True)
 
@@ -64,7 +65,7 @@ def mouse():
         ax.add_patch(Ellipse((x0, 1.75), 0.9, 0.35, color=ear, ec=line, lw=1))
     ax.add_patch(FancyBboxPatch((7.75, 4.9), 0.9, 0.45, boxstyle="round,pad=0.05",  # headmount
                                 color="#8c8c8c", ec=line, lw=1.2))
-    for k, (colour, seed) in enumerate(((ORANGE, 3), (BLUE, 4))):                 # leads and traces
+    for k, (colour, seed) in enumerate(((ACCENT, 3), (GREY, 4))):                 # leads and traces
         y = 8.6 - 1.6 * k
         ax.plot([8.2, 8.2 + 0.4 * k, 10.6], [5.35, y, y], color=colour, linewidth=1.5)
         trace = synthetic_eeg(900, seed)
@@ -98,7 +99,7 @@ def feature_figure(data_dir):
         data = [np.concatenate([t[name].to_numpy() for t in tables[c]]) for c in ("Normal", "Outlier")]
         data = [d[d > 0] for d in data]                                # log scale
         box = ax.boxplot(data, whis=(5, 95), showfliers=False, patch_artist=True, widths=0.6)
-        for patch, colour in zip(box["boxes"], (BLUE, ORANGE)):
+        for patch, colour in zip(box["boxes"], (NORMAL, OUTLIER)):
             patch.set_facecolor(colour)
             patch.set_alpha(0.75)
         for med in box["medians"]:
@@ -120,7 +121,7 @@ def example_figure(data_dir, seconds=20):
     t = np.arange(n) / features.FS
     fig = Figure(figsize=(11, 6), dpi=120)
     axes = fig.subplots(3, 1, sharex=True)
-    for ax, x, name, colour in ((axes[0], eeg1, "EEG1", ORANGE), (axes[1], eeg2, "EEG2", BLUE)):
+    for ax, x, name, colour in ((axes[0], eeg1, "EEG1", ACCENT), (axes[1], eeg2, "EEG2", GREY)):
         ax.plot(t, features.preprocess(x)[start:start + n] * 1e6, color=colour, linewidth=0.6)
         ax.set_ylabel(f"{name} (µV)")
     axes[2].specgram(eeg1[start:start + n] * 1e6, Fs=features.FS, cmap="jet")

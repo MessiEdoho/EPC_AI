@@ -87,6 +87,6 @@ def test_reproduces_published_test_accuracy(model):
                       "Energy_fr_c1": tf.energy_FR_C1, "Energy_fr_c2": tf.energy_FR_C2})[features.FEATURE_NAMES]
     correct = 0
     for mouse, rows in td.groupby("mouseid"):
-        label, _, _ = mdl.classify(model, X.loc[rows.index])
+        label, _, _, _ = mdl.classify(model, X.loc[rows.index])
         correct += label == ("Outlier" if rows.label.iloc[0] == 1 else "Normal")
     assert td.mouseid.nunique() == 16 and correct == 11

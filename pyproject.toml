@@ -1,6 +1,6 @@
 [project]
 name = "epc-ai"
-version = "0.2.0"
+version = "0.3.0"
 description = "Epilepsy phenotype classification from two-channel mouse EEG"
 requires-python = ">=3.10"
 

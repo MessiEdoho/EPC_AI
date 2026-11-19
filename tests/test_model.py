@@ -38,6 +38,7 @@ def test_json_copy_predicts_identically(model):
 @needs_model
 def test_classify_majority_rule(model):
     X = np.random.default_rng(1).lognormal(-16, 2, (101, 4))
-    label, share, window_class = mdl.classify(model, X)
+    label, share, window_class, window_prob = mdl.classify(model, X)
+    np.testing.assert_array_equal(window_class, (window_prob >= 0.5).astype(int))
     assert share == window_class.mean()
     assert label == ("Outlier" if share >= 0.5 else "Normal")

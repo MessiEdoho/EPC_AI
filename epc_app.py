@@ -1,4 +1,4 @@
-"""Start the EPC-AI web server: python EPC_backend.py
+"""Start the EPC-AI web server: python epc_app.py
 
 Settings come from environment variables (see epc/config.py and README.md).
 """

@@ -1,6 +1,6 @@
 """EPC-AI web server.
 
-Run locally:  python EPC_backend.py   (then open http://localhost:8000/EP-Classification/)
+Run locally:  python epc_app.py   (then open http://localhost:8000/EP-Classification/)
 
 Every page and file is served under settings.url_prefix (default /EP-Classification), so the
 app works the same directly and behind a reverse proxy that forwards that path unchanged. If
@@ -11,23 +11,26 @@ import re
 import shutil
 import time
 import uuid
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from flask import Flask, redirect, render_template, request, send_file, url_for
+from markupsafe import Markup
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import redirect as wz_redirect
 from werkzeug.wrappers import Response
 
+from epc import __version__, quality, reports, validation
 from epc import features as feat
 from epc import model as mdl
-from epc import reports, validation
 from epc.config import load_settings
 from epc.validation import ValidationError
 
 ROOT = Path(__file__).resolve().parents[1]
 TOKEN = re.compile(r"^[0-9a-f]{32}$")
 SAMPLES_ZIP = "Mice_example.zip"
+BORDERLINE = (0.40, 0.60)          # share of outlier windows shown as a borderline result
 
 
 def create_app(settings=None, model=None):
@@ -61,17 +64,34 @@ def create_app(settings=None, model=None):
     def error_page(message, back="psr_index", status=400):
         return render_template("EPC_error.html", message=message, back=back), status
 
-    def analyse(eeg1, eeg2, channel_labels, filename):
+    def analyse(eeg1, eeg2, channel_labels, filename, kind):
         table = feat.extract_features(eeg1, eeg2)
-        label, share, window_class = mdl.classify(model, table)
+        label, share, window_class, window_prob = mdl.classify(model, table)
         result_id = uuid.uuid4().hex
         folder = settings.results_dir / result_id
         folder.mkdir()
-        reports.result_zip(folder / reports.ZIP_NAME, table, window_class, eeg1, eeg2, channel_labels)
+        reports.write_results(folder, table, window_class, window_prob, eeg1, eeg2, channel_labels)
+        now = datetime.now().astimezone()
         return render_template(
-            "EPC_result.html", prediction_text=label, result_id=result_id, filename=filename,
-            channels=channel_labels, n_windows=len(window_class),
-            n_outlier=int(window_class.sum()), share=share,
+            "EPC_result.html",
+            prediction_text=label,
+            share=share,
+            borderline=BORDERLINE[0] <= share <= BORDERLINE[1],
+            n_windows=len(window_class),
+            n_outlier=int(window_class.sum()),
+            timeline=Markup(reports.timeline_svg(window_class, window_prob, len(eeg1))),
+            warnings=quality.check(eeg1, eeg2),
+            result_id=result_id,
+            filename=filename,
+            file_format=kind.upper(),
+            channels=channel_labels,
+            minutes=len(eeg1) / feat.FS / 60,
+            fs=feat.FS,
+            analysed=_stamp(now, "%Y-%m-%d %H:%M"),
+            expires=_stamp(now + timedelta(hours=settings.keep_hours), "%H:%M"),
+            model_id=mdl.MODEL_SHA256[:8],
+            version=__version__,
+            again="psr_indexcsv" if kind == "csv" else "psr_indexedf",
         )
 
     def save_upload(file, kind):
@@ -129,7 +149,7 @@ def create_app(settings=None, model=None):
                     return render_template("EPC_channels.html", token=path.stem,
                                            channels=channels, filename=file.filename, fs=feat.FS)
                 eeg1, eeg2, labels = validation.load_edf(path)
-            return analyse(eeg1, eeg2, labels, file.filename)
+            return analyse(eeg1, eeg2, labels, file.filename, kind)
         except ValidationError as e:
             return error_page(e.message, back)
         finally:
@@ -147,7 +167,7 @@ def create_app(settings=None, model=None):
         try:
             eeg1, eeg2, labels = validation.load_edf(
                 path, (request.form.get("channel1"), request.form.get("channel2")))
-            return analyse(eeg1, eeg2, labels, filename)
+            return analyse(eeg1, eeg2, labels, filename, "edf")
         except ValidationError as e:
             if e.code == "V04":                              # wrong choice: let the user choose again
                 keep_upload = True
@@ -168,6 +188,13 @@ def create_app(settings=None, model=None):
             return error_page(f"This result is no longer available. Results are kept for "
                               f"{settings.keep_hours:g} hours; please run the analysis again.", status=404)
         return send_file(path, as_attachment=True, download_name=reports.ZIP_NAME)
+
+    @app.route("/psrfigure/<result_id>/<name>")
+    def psr_figure(result_id, name):
+        path = settings.results_dir / result_id / name
+        if not TOKEN.match(result_id) or name not in reports.FIGURES or not path.is_file():
+            return error_page("This figure is no longer available.", status=404)
+        return send_file(path, mimetype="image/jpeg")
 
     @app.route("/psrexample/")
     def psr_downloadexample():
@@ -200,6 +227,12 @@ def _mount(app, prefix):
         app.wsgi_app = DispatcherMiddleware(outside, {prefix: app.wsgi_app})
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     return app
+
+
+def _stamp(moment, fmt):
+    """Local time with its UTC offset, e.g. '15:43 (UTC+00:00)', the same on Windows and Linux."""
+    offset = moment.strftime("%z")
+    return f"{moment.strftime(fmt)} (UTC{offset[:3]}:{offset[3:]})"
 
 
 def _remove(path):

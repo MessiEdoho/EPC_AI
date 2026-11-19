@@ -1,19 +1,90 @@
 {% extends "base.html" %}
-{% block title %}EPC-AI result{% endblock %}
+{% block title %}EPC-AI result: {{ prediction_text }}{% endblock %}
 {% block content %}
+{% set outlier = prediction_text == "Outlier" %}
+{% set pct = (share * 100)|round|int %}
+
+<div class="verdict {{ 'verdict-outlier' if outlier else 'verdict-normal' }}">
+  <div class="verdict-head">
+    <p class="verdict-kicker">Predicted epilepsy phenotype</p>
+    <p class="verdict-label">{{ prediction_text }}</p>
+    {% if borderline %}<span class="badge badge-warn">Borderline: interpret with caution</span>{% endif %}
+  </div>
+  <p class="verdict-meaning">
+    {% if outlier %}
+      The EEG suggests this mouse will develop a <b>low or high</b> rate of spontaneous seizures in days 7–13
+      after kainic acid injection.
+    {% else %}
+      The EEG suggests this mouse will develop a <b>normal</b> rate of spontaneous seizures in days 7–13
+      after kainic acid injection.
+    {% endif %}
+  </p>
+  <div class="vote" aria-label="{{ pct }}% of windows classified as outlier">
+    <div class="vote-bar"><div class="vote-fill" style="width: {{ pct }}%"></div><div class="vote-mark"></div></div>
+    <div class="vote-scale"><span>0%</span><span>50%: outlier at or above this line</span><span>100%</span></div>
+  </div>
+  <p class="vote-text"><b>{{ n_outlier }} of {{ n_windows }}</b> five-second windows ({{ pct }}%) were classified
+    as outlier. The mouse is classified by majority vote of its windows.</p>
+</div>
+
+{% if warnings %}
+<section class="warnings">
+  <h2>Check the input</h2>
+  {% for w in warnings %}
+  <div class="warning"><b>{{ w.title }}.</b> {{ w.message }}</div>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section>
+  <h2>Window by window</h2>
+  <div class="timeline-wrap">{{ timeline }}</div>
+  <p class="legend">
+    <span class="key key-normal"></span> Normal window
+    <span class="key key-outlier"></span> Outlier window
+    <span class="key key-line"></span> Outlier probability (dashed line: 0.5)
+  </p>
+</section>
+
 <div class="columns">
   <section>
-    <p class="result">The epilepsy phenotype of this mouse is: <b>{{ prediction_text }}</b></p>
-    <p class="small">File: {{ filename }}. Channels: {{ channels[0] }} (EEG1), {{ channels[1] }} (EEG2).<br>
-      {{ n_outlier }} of {{ n_windows }} five-second windows were classified as outlier
-      ({{ "%.0f"|format(share * 100) }}%); the mouse is classified as outlier when this is 50% or more.</p>
-    <p>Please click "Help" for more details.</p>
-    <h3><a href="{{ url_for('psr_downloadFigure', result_id=result_id) }}">Download the result</a></h3>
-    <h3><a href="{{ url_for('psr_help') }}" target="_blank">Help</a></h3>
-    <h3><a href="{{ url_for('psr_index') }}">Back to home page</a></h3>
+    <h2>Recording</h2>
+    <table class="details">
+      <tr><th>File</th><td>{{ filename }} ({{ file_format }})</td></tr>
+      <tr><th>Length</th><td>{{ "%.1f"|format(minutes) }} min, {{ n_windows }} windows of 5 s</td></tr>
+      <tr><th>Sampling rate</th><td>{{ fs }} Hz</td></tr>
+      <tr><th>EEG1 (ipsilateral)</th><td>{{ channels[0] }}</td></tr>
+      <tr><th>EEG2 (contralateral)</th><td>{{ channels[1] }}</td></tr>
+      <tr><th>Analysed</th><td>{{ analysed }}</td></tr>
+      <tr><th>Model</th><td>XGBoost <code>{{ model_id }}</code>, EPC-AI {{ version }}</td></tr>
+    </table>
   </section>
   <section>
-    <img class="illustration" src="{{ url_for('static', filename='Mice_img.png') }}" alt="Illustration of a mouse with EEG electrodes">
+    <h2>EEG</h2>
+    <div class="thumbs">
+      {% for name, label in [("EEG1.jpg", "EEG1 (ipsilateral)"), ("EEG2.jpg", "EEG2 (contralateral)")] %}
+      {% set src = url_for('psr_figure', result_id=result_id, name=name) %}
+      <figure>
+        <a href="{{ src }}" target="_blank"><img src="{{ src }}" alt="Amplitude and spectrogram of {{ label }}"></a>
+        <figcaption>{{ label }}: amplitude and spectrogram (click to enlarge)</figcaption>
+      </figure>
+      {% endfor %}
+    </div>
   </section>
 </div>
+
+<section class="caveat">
+  <p><b>Research aid.</b> EPC-AI is not accurate enough for routine decisions about individual animals. The published
+    test accuracy is 69% (11 of 16 mice). It was developed on EEG recorded during status epilepticus in the
+    intra-amygdala kainic acid mouse model, and predicts the phenotype for the first two weeks after injection only.
+    See <a href="{{ url_for('psr_help') }}" target="_blank">Help</a> for details.</p>
+</section>
+
+<section class="actions">
+  <a class="button" href="{{ url_for('psr_downloadFigure', result_id=result_id) }}">Download results (zip)</a>
+  <a class="button button-secondary" href="{{ url_for(again) }}">Analyse another recording</a>
+  <a class="button button-secondary" href="{{ url_for('psr_index') }}">Home</a>
+  <p class="small">The download contains feature summaries, the features, probability and class of every window, and
+    both EEG figures. It is available until {{ expires }} (results are kept for a limited time).</p>
+</section>
 {% endblock %}
