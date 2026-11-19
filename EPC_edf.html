@@ -1,0 +1,111 @@
+<html>
+  <head>
+    <style>
+
+
+input[type="number"]{width:9%; }
+
+div.absolute {
+  position: absolute;
+  bottom: 100px;
+  right: 200px;
+  width: 400px;
+  height: 300px;
+}
+
+div.absolute1 {
+  position: absolute;
+  top: 2px;
+  right: 0px;
+  width: 300px;
+  height: 100px;
+}
+img {
+  width: 100%;
+  height: auto;
+}
+
+#content>div{
+  display:table-cell
+}
+
+/*adding some extras for demo purposes*/
+#content-wrapper{
+  width:50%;
+  height:80%;
+  top:100px;
+  left:30px;
+  position:absolute;
+}
+
+h1,h4
+{
+  color: FF7D33;
+}
+p1
+{
+  color: FF7D33;font-size: 18px;
+}
+h3
+{
+  color: FF7D33;font-size: 21px;
+}
+p { color: black; font-size: 18px; font-family:georgia,garamond,serif;}
+p2 {font-size: 14px; font-family:georgia,garamond,serif;font-weight:bold;}
+p3 { color: black; font-family:georgia,garamond,serif;font-size: 15px; }
+p4 { color: #685206; font-family:georgia,garamond,serif;font-size: 15px; }
+a:link {
+font-size: 21px;
+color: FF7D33;
+text-decoration: none;
+}
+a:visited {
+font-size: 21px;
+color: FF7D33;
+text-decoration: none;
+}
+a:hover {
+font-size: 21px;
+color: #999999;
+text-decoration: underline;
+}
+
+</style>
+
+  </head>
+
+  <body>
+           <h1>EPC-AI EDF</h1>
+          <HR style="FILTER: alpha(opacity=100,finishopacity=0,style=5)" align=left width=700 color=lightgrey SIZE=9>
+            <div class="absolute1"><img src="../static/EEG_amp.png" alt="Cinque Terre" width="300" height="100"> </div>
+            <div id="content-wrapper">
+<h3>Basic instruction</h3>
+    <p1>Input</p1>
+    <p>Please upload an EDF file which contains two-channel EEGs recorded during the
+                    status epilepticus period of Intra-amygdala
+                    microinjection of kainic acid model of drug-resistant epilepsy in mice.</p>
+    <p1>Output</p1>
+    <p>The web page will return to you with an evaluation indicating whether
+                    the EEG is more likely to exhibit normal or outlier epilepsy phenotype. Additionally, the web server
+                    offers example EEG traces from status epilepticus periods, along with the features used for
+                    prediction.</p>
+
+ <p> Upload your EDF file and click the "Epilepsy Phenotypes Classification" button.
+        A new page will open when your results are ready. Please click "Help" for more details.
+     <br>
+      <br>
+   <form action="/EPC_result" method="POST" enctype="multipart/form-data">
+                   <input type="file" class="custom-file-input" name="image" id="image">
+        </br>
+            </br>
+            <button type="submit"  class="button button1" style="font-size: 18px;">Epilepsy Phenotypes Classification</button>
+    </form>
+                <br>
+<h3><a href="{{ url_for('psr_index') }}">Back to home page</a></h3>
+            </div>
+
+
+ <div class="absolute"><img src="../static/Mice_img.png" alt="Cinque Terre" width="1000" height="300"> </div>
+
+  </body>
+</html>
