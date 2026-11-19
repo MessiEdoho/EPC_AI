@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}EPC-AI help{% endblock %}
+{% block heading %}EPC-AI help{% endblock %}
+{% block content %}
+<section>
+  <p>EPC-AI aids basic researchers in analyzing EEG datasets by predicting emergent epilepsy phenotypes.
+    This prediction is solely based on the acute EEG recorded during status epilepticus in the intra-amygdala
+    microinjection of kainic acid model of drug-resistant epilepsy in mice.</p>
+  <p>EPC-AI is designed to support two-channel EEG recordings sampled at 500 Hz, in both EDF and CSV formats.
+    When uploading an EEG in EDF format, it is recommended to only upload the two-channel EEGs recorded during the
+    status epilepticus period; if the file has more channels, you will be asked to choose two. For CSV files,
+    upload the two-channel EEGs recorded during the status epilepticus, with the sampling frequency and the
+    signal unit (V, mV or µV) of your EEG recordings.</p>
+  <p>Upon uploading, the system will assess the information and provide an evaluation indicating whether
+    the EEG is more likely to exhibit normal or outlier epilepsy phenotype. Additionally, the web server
+    offers example EEG traces from status epilepticus periods, along with the features used for
+    prediction. These features are available for download, facilitating further analysis by researchers.</p>
+
+  <h2>How the prediction is made</h2>
+  <p>Each channel has its mean removed and 50 Hz mains noise filtered out, and is split into 5-second windows.
+    For each window EPC-AI computes four features: the nonlinear energy of each channel, and the energy of each
+    channel's ripple band (62.5–125 Hz, from a wavelet decomposition). The classifier labels every window as
+    normal or outlier; the mouse is classified as outlier when 50% or more of its windows are.</p>
+
+  <img class="figure" src="{{ url_for('static', filename='EEG_feature.png') }}" alt="Box plots of the four features for normal and outlier mice">
+  <p>The figure above shows a univariate analysis of the four features used for prediction, comparing the normal
+    and the outlier classes within each feature across the training recordings.</p>
+
+  <img class="figure" src="{{ url_for('static', filename='EEG_signal.png') }}" alt="Example EEG from an outlier mouse with spectrogram">
+  <p>We have selected an intra-amygdala kainic acid model of epilepsy (outlier) as an illustrative example (figure
+    above). You can download sample EEG data from the 'Sample EEG Files' section on the EPC-AI home page, where
+    available. After uploading the EEG file, please click the 'Epilepsy Phenotypes Classification' button.</p>
+  <p>Following the upload, the system will assess the information and furnish an evaluation indicating whether the
+    EEG is more likely to exhibit normal or outlier epilepsy phenotype. The features used for prediction are
+    available for download, enabling further analysis by researchers (by clicking 'Download the result'). The
+    download contains the mean and standard deviation of each feature, the features and class of every 5-second
+    window, and the amplitude and spectrogram of each uploaded channel for the user's in-depth analysis. Results
+    are kept on the server for a limited time only.</p>
+  <p>A recording of about 30 minutes is processed in a few seconds. If users wish to apply EPC-AI with
+    data from another mouse model, they can either conduct a preliminary test themselves or contact us at
+    Catherine.Mooney@ucd.ie for assistance. Moreover, we will provide executables for academic use upon request
+    from labs interested in contacting us. We are committed to aiding researchers in installing a local version
+    of EPC-AI.</p>
+  <h3><a href="{{ url_for('psr_index') }}">Back to home page</a></h3>
+</section>
+{% endblock %}

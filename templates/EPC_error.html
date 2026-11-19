@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}EPC-AI: problem{% endblock %}
+{% block content %}
+<h2>The analysis could not be run</h2>
+<p class="error">{{ message }}</p>
+<h3><a href="{{ url_for(back) }}">Go back</a></h3>
+<h3><a href="{{ url_for('psr_index') }}">Back to home page</a></h3>
+{% endblock %}

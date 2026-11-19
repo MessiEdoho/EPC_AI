@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
 
 # Virtual environments
 .venv/
@@ -10,14 +11,26 @@ venv/
 # VS Code
 .vscode/
 
-# Model checkpoints
+# Model files (kept outside the repository; see README)
+*.model
+Mice.json
 *.pt
 *.pth
+
+# EEG data and uploads
+*.edf
+*.csv
+*.xlsx
+*.mat
+static/uploads/
+samples/
+
+# Results
+Feature_analysis.zip
+feature_analysis/
+results/
+logs/
 
 # NumPy arrays
 *.npy
 *.npz
-
-# Results
-results/
-logs/

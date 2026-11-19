@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}EPC-AI result{% endblock %}
+{% block content %}
+<div class="columns">
+  <section>
+    <p class="result">The epilepsy phenotype of this mouse is: <b>{{ prediction_text }}</b></p>
+    <p class="small">File: {{ filename }}. Channels: {{ channels[0] }} (EEG1), {{ channels[1] }} (EEG2).<br>
+      {{ n_outlier }} of {{ n_windows }} five-second windows were classified as outlier
+      ({{ "%.0f"|format(share * 100) }}%); the mouse is classified as outlier when this is 50% or more.</p>
+    <p>Please click "Help" for more details.</p>
+    <h3><a href="{{ url_for('psr_downloadFigure', result_id=result_id) }}">Download the result</a></h3>
+    <h3><a href="{{ url_for('psr_help') }}" target="_blank">Help</a></h3>
+    <h3><a href="{{ url_for('psr_index') }}">Back to home page</a></h3>
+  </section>
+  <section>
+    <img class="illustration" src="{{ url_for('static', filename='Mice_img.png') }}" alt="Illustration of a mouse with EEG electrodes">
+  </section>
+</div>
+{% endblock %}

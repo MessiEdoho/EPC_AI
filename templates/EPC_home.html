@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="columns">
+  <section>
+    <h2>Description</h2>
+    <p>EPC-AI aids basic researchers in analyzing EEG datasets by predicting emergent epilepsy phenotypes.
+      This prediction is solely based on the acute EEG recorded during status epilepticus in the intra-amygdala
+      microinjection of kainic acid model of drug-resistant epilepsy in mice.</p>
+    <p>EPC-AI is designed to support two-channel EEG recordings sampled at 500 Hz, in both EDF and CSV formats.
+      When uploading an EEG in EDF format, it is recommended to only upload the two-channel EEGs recorded during
+      the status epilepticus period; if the file has more channels, you will be asked to choose two. For CSV
+      files, upload the two-channel EEGs recorded during the status epilepticus, with their sampling frequency
+      and signal unit.</p>
+    <p>Upon uploading, the system will assess the information and provide an evaluation indicating whether
+      the EEG is more likely to exhibit normal or outlier epilepsy phenotype. Additionally, the web server
+      offers example EEG traces from status epilepticus periods, along with the features used for
+      prediction. These features are available for download, facilitating further analysis by researchers.</p>
+
+    <h3>Please choose the format of your EEG file:</h3>
+    <p>
+      <a class="button" href="{{ url_for('psr_indexedf') }}">EDF format</a>
+      &nbsp;
+      <a class="button" href="{{ url_for('psr_indexcsv') }}">CSV format</a>
+    </p>
+  </section>
+
+  <section>
+    <h2><a href="{{ url_for('psr_downloadexample') }}">Sample EEG Files</a></h2>
+    <p>You can download some sample EEG files to test the EPC-AI web server.
+      If you want to download these sample files, please click "Sample EEG Files" (sampling frequency = 500 Hz).</p>
+    <img class="illustration" src="{{ url_for('static', filename='Mice_img.png') }}" alt="Illustration of a mouse with EEG electrodes">
+    <p><b>Notice:</b> If you want to analyze an EEG file greater than 100 MB, please contact us.
+      We can share executable files with you and assist you with the installation of a local version of EPC-AI.</p>
+
+    <h2>Contact details</h2>
+    <ul>
+      <li>For help or any other queries please contact: <b>Catherine.Mooney@ucd.ie</b></li>
+    </ul>
+    <footer class="site">
+      <p class="small">EPC-AI is free for academic use. If you are a commercial user please contact us for a licence.</p>
+    </footer>
+  </section>
+</div>
+{% endblock %}

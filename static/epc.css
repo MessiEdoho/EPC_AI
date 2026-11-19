@@ -1,0 +1,83 @@
+:root {
+  --accent: #ff7d33;
+  --accent-dark: #c4561a;
+  --text: #1a1a1a;
+  --muted: #5b5b5b;
+  --rule: #d9d9d9;
+  --error-bg: #fdecea;
+  --error-text: #8a1c12;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--text);
+  font: 18px/1.5 Georgia, Garamond, serif;
+}
+
+.page { max-width: 1200px; margin: 0 auto; padding: 16px 30px 48px; }
+
+header.site {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 6px solid var(--rule);
+  margin-bottom: 24px;
+}
+header.site h1 { margin: 0; }
+header.site h1 a { color: var(--accent); text-decoration: none; font-size: 2rem; }
+header.site img { width: 300px; max-width: 45%; height: auto; }
+
+h1, h2, h3 { color: var(--accent); }
+h2 { font-size: 1.4rem; border-bottom: 3px solid var(--rule); padding-bottom: 4px; }
+h3 { font-size: 1.15rem; }
+.label { color: var(--accent); font-weight: bold; }
+
+a { color: var(--accent-dark); }
+a:hover { color: var(--muted); }
+
+.columns { display: flex; gap: 48px; flex-wrap: wrap; }
+.columns > * { flex: 1 1 420px; min-width: 0; }
+
+.illustration { width: 100%; max-width: 480px; height: auto; display: block; margin: 16px 0; }
+.figure { width: 100%; max-width: 640px; height: auto; display: block; margin: 16px 0; }
+
+button, .button {
+  display: inline-block;
+  font: inherit;
+  font-size: 1rem;
+  padding: 8px 18px;
+  border: 1px solid var(--accent-dark);
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+}
+button:hover, .button:hover { background: var(--accent-dark); color: #fff; }
+
+form .field { margin: 14px 0; }
+form label { display: inline-block; min-width: 190px; }
+input, select { font: inherit; font-size: 1rem; padding: 4px 6px; }
+
+.error {
+  background: var(--error-bg);
+  color: var(--error-text);
+  border-left: 5px solid var(--error-text);
+  padding: 12px 16px;
+}
+
+.result { font-size: 1.3rem; }
+.small { font-size: 0.9rem; color: var(--muted); }
+
+footer.site { border-top: 2px solid var(--rule); margin-top: 32px; padding-top: 8px; }
+
+@media (max-width: 700px) {
+  .page { padding: 12px 16px 32px; }
+  header.site { flex-direction: column; align-items: flex-start; }
+  header.site img { max-width: 100%; }
+  form label { display: block; }
+}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}EPC-AI EDF{% endblock %}
+{% block heading %}EPC-AI EDF{% endblock %}
+{% block content %}
+<div class="columns">
+  <section>
+    <h2>Basic instruction</h2>
+    <p><span class="label">Input</span><br>
+      Please upload an EDF file which contains two-channel EEGs, sampled at 500 Hz, recorded during the
+      status epilepticus period of intra-amygdala microinjection of kainic acid model of drug-resistant
+      epilepsy in mice. If the file contains more than two channels, you will be asked to choose the two
+      EEG channels to use.</p>
+    <p><span class="label">Output</span><br>
+      The web page will return to you with an evaluation indicating whether
+      the EEG is more likely to exhibit normal or outlier epilepsy phenotype. Additionally, the web server
+      offers example EEG traces from status epilepticus periods, along with the features used for
+      prediction.</p>
+    <p>Upload your EDF file (up to {{ max_mb }} MB) and click the "Epilepsy Phenotypes Classification" button.
+      A new page will open when your results are ready. Please click
+      <a href="{{ url_for('psr_help') }}" target="_blank">Help</a> for more details.</p>
+
+    <form action="{{ url_for('psr_transform_view') }}" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="format" value="edf">
+      <div class="field">
+        <label for="eeg_file">EDF file:</label>
+        <input type="file" name="eeg_file" id="eeg_file" accept=".edf" required>
+      </div>
+      <button type="submit">Epilepsy Phenotypes Classification</button>
+    </form>
+    <h3><a href="{{ url_for('psr_index') }}">Back to home page</a></h3>
+  </section>
+  <section>
+    <img class="illustration" src="{{ url_for('static', filename='Mice_img.png') }}" alt="Illustration of a mouse with EEG electrodes">
+  </section>
+</div>
+{% endblock %}

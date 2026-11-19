@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}EPC-AI: choose channels{% endblock %}
+{% block heading %}EPC-AI EDF{% endblock %}
+{% block content %}
+<h2>Choose two EEG channels</h2>
+<p><b>{{ filename }}</b> contains {{ channels|length }} channels. EPC-AI uses two EEG channels; please choose
+  which ones. Only channels sampled at {{ fs }} Hz can be used.</p>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<form action="{{ url_for('psr_channels') }}" method="POST">
+  <input type="hidden" name="token" value="{{ token }}">
+  <input type="hidden" name="filename" value="{{ filename }}">
+  {% for field, default in [("channel1", 0), ("channel2", 1)] %}
+  <div class="field">
+    <label for="{{ field }}">{{ "EEG1" if field == "channel1" else "EEG2" }} channel:</label>
+    <select name="{{ field }}" id="{{ field }}" required>
+      <option value="" selected disabled>Choose…</option>
+      {% for ch in channels %}
+      <option value="{{ ch.index }}" {% if not ch.usable %}disabled{% endif %}>
+        {{ ch.label or "Channel %d"|format(ch.index + 1) }} ({{ "%g"|format(ch.fs) }} Hz{% if ch.unit %}, {{ ch.unit }}{% endif %}){% if not ch.usable %}: not usable{% endif %}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endfor %}
+  <button type="submit">Epilepsy Phenotypes Classification</button>
+</form>
+<h3><a href="{{ url_for('psr_indexedf') }}">Upload a different file</a></h3>
+{% endblock %}

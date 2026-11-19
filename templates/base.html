@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}EPC-AI{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='epc.css') }}">
+</head>
+<body>
+  <div class="page">
+    <header class="site">
+      <h1><a href="{{ url_for('psr_index') }}">{% block heading %}EPC-AI{% endblock %}</a></h1>
+      <img src="{{ url_for('static', filename='EEG_amp.png') }}" alt="EEG trace">
+    </header>
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>
