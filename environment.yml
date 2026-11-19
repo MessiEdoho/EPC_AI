@@ -1,0 +1,24 @@
+# Create with:  conda env create -f environment.yml
+# Update with:  conda env update -f environment.yml --prune
+# Remove with:  conda env remove -n epc-ai
+name: epc-ai
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - flask==3.0.3
+      - werkzeug==3.0.3
+      - numpy==1.26.4
+      - scipy==1.13.1
+      - pandas==2.2.2
+      - PyWavelets==1.7.0
+      - xgboost==3.0.0
+      - scikit-learn==1.5.1       # required by xgboost's XGBClassifier
+      - pyEDFlib==0.1.40
+      - matplotlib==3.9.2
+      - gunicorn==23.0.0          # server process manager on lisda (Linux only)
+      - pytest==7.4.4
+      - openpyxl==3.1.5           # reads the training feature spreadsheets in the parity test
+      - pyflakes==3.2.0           # code check, development only

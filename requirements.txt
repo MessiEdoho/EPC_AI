@@ -6,6 +6,8 @@ scipy==1.13.1
 pandas==2.2.2
 PyWavelets==1.7.0
 xgboost==3.0.0
+scikit-learn==1.5.1     # required by xgboost's XGBClassifier
+gunicorn==23.0.0        # server process manager on lisda (Linux only)
 pyEDFlib==0.1.40
 matplotlib==3.9.2
 

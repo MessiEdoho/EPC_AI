@@ -15,6 +15,13 @@ class Settings:
     samples_dir: Path      # sample recordings offered for download (may be empty)
     max_upload_mb: int     # larger uploads are refused
     keep_hours: float      # results and unfinished uploads older than this are deleted
+    url_prefix: str = "/EP-Classification"   # every page and file is served under this path
+
+
+def normalise_prefix(prefix):
+    """'' or a path such as '/EP-Classification' (leading slash, no trailing slash)."""
+    prefix = (prefix or "").strip().strip("/")
+    return f"/{prefix}" if prefix else ""
 
 
 def load_settings():
@@ -28,4 +35,5 @@ def load_settings():
         samples_dir=Path(env("EPC_SAMPLES_DIR", root / "samples")),
         max_upload_mb=int(env("EPC_MAX_UPLOAD_MB", "100")),
         keep_hours=float(env("EPC_KEEP_HOURS", "3")),
+        url_prefix=normalise_prefix(env("EPC_URL_PREFIX", "/EP-Classification")),
     )

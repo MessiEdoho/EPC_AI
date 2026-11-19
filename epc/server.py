@@ -1,6 +1,11 @@
 """EPC-AI web server.
 
 Run locally:  python EPC_backend.py   (then open http://localhost:8000/EP-Classification/)
+
+Every page and file is served under settings.url_prefix (default /EP-Classification), so the
+app works the same directly and behind a reverse proxy that forwards that path unchanged. If
+the proxy strips the path instead, set EPC_URL_PREFIX to an empty value and have the proxy send
+X-Forwarded-Prefix; links then still point to the public address.
 """
 import re
 import shutil
@@ -9,6 +14,10 @@ import uuid
 from pathlib import Path
 
 from flask import Flask, redirect, render_template, request, send_file, url_for
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.utils import redirect as wz_redirect
+from werkzeug.wrappers import Response
 
 from epc import features as feat
 from epc import model as mdl
@@ -27,20 +36,27 @@ def create_app(settings=None, model=None):
     model = model if model is not None else mdl.load_model(settings.model_path)
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
     settings.results_dir.mkdir(parents=True, exist_ok=True)
-    for leftover in settings.upload_dir.iterdir():          # uploads from a previous run
-        _remove(leftover)
 
     app = Flask(__name__, template_folder=str(ROOT / "templates"), static_folder=str(ROOT / "static"))
     app.config["MAX_CONTENT_LENGTH"] = settings.max_upload_mb * 1024 * 1024
     app.config["EPC_SETTINGS"] = settings
 
     def sweep():
-        """Delete unfinished uploads and results older than the keep time."""
+        """Delete unfinished uploads and results older than the keep time.
+
+        Age-based, so it is safe with several server processes sharing the folders.
+        """
         cutoff = time.time() - settings.keep_hours * 3600
         for folder in (settings.upload_dir, settings.results_dir):
             for p in folder.iterdir():
-                if p.stat().st_mtime < cutoff:
+                try:
+                    old = p.stat().st_mtime < cutoff
+                except OSError:                              # removed by another process
+                    continue
+                if old:
                     _remove(p)
+
+    sweep()                                                  # leftovers from a previous run
 
     def error_page(message, back="psr_index", status=400):
         return render_template("EPC_error.html", message=message, back=back), status
@@ -66,27 +82,23 @@ def create_app(settings=None, model=None):
     # ------------------------------------------------------------------ pages
 
     @app.route("/")
-    def root():
-        return redirect(url_for("psr_index"))
-
-    @app.route("/EP-Classification/")
     def psr_index():
         return render_template("EPC_home.html")
 
-    @app.route("/EP-Classification/EDF")
+    @app.route("/EDF")
     def psr_indexedf():
         return render_template("EPC_edf.html", max_mb=settings.max_upload_mb)
 
-    @app.route("/EP-Classification/CSV")
+    @app.route("/CSV")
     def psr_indexcsv():
         return render_template("EPC_csv.html", max_mb=settings.max_upload_mb, fs=feat.FS,
                                units=validation.CSV_UNITS)
 
-    @app.route("/EP-Classification/CSV-PICKLE")
+    @app.route("/CSV-PICKLE")
     def psr_indexcsv_old():                                  # old address, kept for bookmarks
         return redirect(url_for("psr_indexcsv"))
 
-    @app.route("/EP-Classification/EPC_help.html")
+    @app.route("/EPC_help.html")
     def psr_help():
         return render_template("EPC_help.html")
 
@@ -174,6 +186,19 @@ def create_app(settings=None, model=None):
     def not_found(_):
         return error_page("Page not found.", status=404)
 
+    return _mount(app, settings.url_prefix)
+
+
+def _mount(app, prefix):
+    """Serve the app under `prefix`; the bare server root redirects there."""
+    if prefix:
+        def outside(environ, start_response):
+            if environ.get("PATH_INFO", "") in ("", "/"):
+                target = environ.get("SCRIPT_NAME", "") + prefix + "/"
+                return wz_redirect(target)(environ, start_response)
+            return Response("Not found", status=404)(environ, start_response)
+        app.wsgi_app = DispatcherMiddleware(outside, {prefix: app.wsgi_app})
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     return app
 
 
